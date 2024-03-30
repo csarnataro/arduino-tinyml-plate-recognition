@@ -1,0 +1,56 @@
+:Author: c_sarnataro_arduino
+:Email:
+:Date: 24/03/2024
+:Revision: version#
+:License: Public Domain
+
+= Project: {Project}
+
+An Arduino Cloud sketch which receives commands from the UART interface and draws
+national flags on an Arduino Giga Display Shield connected to an Arduino Giga R1 board.
+It will be used as a demo in a talk to show results coming from an Arduino Nicla Vision
+(or any other board with UART interface) trained with Edge Impulse to do image recognition on the edge. 
+
+== Step 1: Installation
+1. Create a Thing on the Arduino Cloud (https://app.arduino.cc/). You need an Arduino account.
+2. Configure a Arduino Giga R1 device with your WiFi credentials.
+3. From the Arduino Cloud web interface, create these variables:
+    - String region - Read Only
+    - int count_eu - Read Only
+    - int count_swiss - Read Only
+    - int count_unknown - Read Only
+3. Paste the code available in `Plate_display_mar24a.ino`
+
+
+== Step 2: Assemble the circuit
+
+Assemble the circuit:
+1. Plug the Arduino Giga Display Shield onto the Arduino Giga R1 WiFi
+2. Connect your Arduino Nicla Vision via UART to the Arduino Giga R1 WiFi using Pins 0 (RX) and 1 (TX) and a common ground
+
+== Step 3: Load the code
+In the Arduino Cloud app, verify and upload the code on your Arduino Giga R1 WiFi.
+Optionally you can use the desktop version of the Arduino IDE to fetch the code from the Cloud Sketchbook
+and upload it using the Arduino IDE
+
+=== License
+This project is released under a MIT License.
+
+=== Contributing
+To contribute to this project please contact: 
+https://github.com/csarnataro
+
+=== BOM
+(Preliminary version)
+
+|===
+| A1 | Arduino Giga R1 WiFi         | ABX00063    | 1
+|    | Arduino Giga Display Shield  | ASX00039    | 1        
+|    | Jump Wires                   |             | 3        
+|===
+
+
+=== Help
+This document is written in the _AsciiDoc_ format, a markup language to describe documents. 
+If you need help you can search the http://www.methods.co.nz/asciidoc[AsciiDoc homepage]
+or consult the http://powerman.name/doc/asciidoc[AsciiDoc cheatsheet]
