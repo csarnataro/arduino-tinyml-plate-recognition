@@ -1,19 +1,3 @@
-/* Edge Impulse ingestion SDK
- * Copyright (c) 2022 EdgeImpulse Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
-
 /* Includes ---------------------------------------------------------------- */
 #include <eu-swiss-plate-recognition_inferencing.h>
 
@@ -28,21 +12,6 @@
 #define EI_CAMERA_RAW_FRAME_BUFFER_ROWS           240
 #define EI_CAMERA_RAW_FRAME_BYTE_SIZE             2
 
-/*
- ** NOTE: If you run into TFLite arena allocation issue.
- **
- ** This may be due to may dynamic memory fragmentation.
- ** Try defining "-DEI_CLASSIFIER_ALLOCATION_STATIC" in boards.local.txt (create
- ** if it doesn't exist) and copy this file to
- ** `<ARDUINO_CORE_INSTALL_PATH>/arduino/hardware/<mbed_core>/<core_version>/`.
- **
- ** See
- ** (https://support.arduino.cc/hc/en-us/articles/360012076960-Where-are-the-installed-cores-located-)
- ** to find where Arduino installs cores on your machine.
- **
- ** If the problem persists then there's not enough memory for this model and application.
- */
-
 #define ALIGN_PTR(p,a)   ((p & (a-1)) ?(((uintptr_t)p + a) & ~(uintptr_t)(a-1)) : p)
 
 /* Edge Impulse ------------------------------------------------------------- */
@@ -51,24 +20,6 @@ typedef struct {
     size_t width;
     size_t height;
 } ei_device_resize_resolutions_t;
-
-/**
- * @brief      Check if new serial data is available
- *
- * @return     Returns number of available bytes
- */
-int ei_get_serial_available(void) {
-    return Serial.available();
-}
-
-/**
- * @brief      Get next available byte
- *
- * @return     byte
- */
-char ei_get_serial_byte(void) {
-    return Serial.read();
-}
 
 /* Private variables ------------------------------------------------------- */
 static bool debug_nn = false; // Set this to true to see e.g. features generated from the raw signal
@@ -90,11 +41,17 @@ static uint8_t *ei_camera_capture_out = NULL;
 static uint8_t *ei_camera_frame_mem;
 static uint8_t *ei_camera_frame_buffer; // 32-byte aligned
 
+#define UNKNOWN_RES_CHAR "U"
+#define SWISS_RES_CHAR "S"
+#define EU_RES_CHAR "E"
+#define FAIL_RES_CHAR "F"
+static char* pred_result = UNKNOWN_RES_CHAR;
+static bool led_status = false;
+
 /* Function definitions ------------------------------------------------------- */
-bool ei_camera_init(void);
-void ei_camera_deinit(void);
-bool ei_camera_capture(uint32_t img_width, uint32_t img_height, uint8_t *out_buf) ;
-int calculate_resize_dimensions(uint32_t out_width, uint32_t out_height, uint32_t *resize_col_sz, uint32_t *resize_row_sz, bool *do_resize);
+bool  ei_camera_init(void);
+bool  ei_camera_capture(uint32_t img_width, uint32_t img_height, uint8_t *out_buf) ;
+int   calculate_resize_dimensions(uint32_t out_width, uint32_t out_height, uint32_t *resize_col_sz, uint32_t *resize_row_sz, bool *do_resize);
 
 /**
 * @brief      Arduino setup function
@@ -105,7 +62,7 @@ void setup()
     Serial.begin(115200);
     // comment out the below line to cancel the wait for USB connection (needed for native USB)
     while (!Serial);
-    Serial.println("Edge Impulse Inferencing Demo");
+    Serial.println("Edge Impulse Inferencing - Plate recognition (EU/SWISS)");
 
     // initialise M4 RAM
     // Arduino Nicla Vision has 512KB of RAM allocated for M7 core
@@ -116,10 +73,13 @@ void setup()
 
     if (ei_camera_init() == false) {
         ei_printf("Failed to initialize Camera!\r\n");
-    }
-    else {
+        while(1) ;
+    } else {
         ei_printf("Camera initialized\r\n");
     }
+
+    Serial1.begin(115200);
+    pinMode(LED_BUILTIN, OUTPUT);
 }
 
 /**
@@ -149,44 +109,50 @@ void loop()
 
     // Run the classifier
     ei_impulse_result_t result = { 0 };
-
     EI_IMPULSE_ERROR err = run_classifier(&signal, &result, debug_nn);
+
     if (err != EI_IMPULSE_OK) {
         ei_printf("ERR: Failed to run classifier (%d)\n", err);
-        return;
-    }
+        pred_result = FAIL_RES_CHAR;
+    } else {
+        // print the predictions
+        ei_printf("Predictions (DSP: %d ms., Classification: %d ms., Anomaly: %d ms.): \n",
+                    result.timing.dsp, result.timing.classification, result.timing.anomaly);
 
-    // print the predictions
-    ei_printf("Predictions (DSP: %d ms., Classification: %d ms., Anomaly: %d ms.): \n",
-                result.timing.dsp, result.timing.classification, result.timing.anomaly);
-#if EI_CLASSIFIER_OBJECT_DETECTION == 1
-    bool bb_found = result.bounding_boxes[0].value > 0;
-    for (size_t ix = 0; ix < result.bounding_boxes_count; ix++) {
-        auto bb = result.bounding_boxes[ix];
-        if (bb.value == 0) {
-            continue;
+        bool bb_found = result.bounding_boxes[0].value > 0;
+        for (size_t ix = 0; ix < result.bounding_boxes_count; ix++) {
+            auto bb = result.bounding_boxes[ix];
+            if (bb.value == 0) {
+                continue;
+            }
+
+            ei_printf("    %s (", bb.label);
+            ei_printf_float(bb.value);
+            ei_printf(") [ x: %u, y: %u, width: %u, height: %u ]\n", bb.x, bb.y, bb.width, bb.height);
         }
 
-        ei_printf("    %s (", bb.label);
-        ei_printf_float(bb.value);
-        ei_printf(") [ x: %u, y: %u, width: %u, height: %u ]\n", bb.x, bb.y, bb.width, bb.height);
+        for (size_t ix = 0; ix < result.bounding_boxes_count; ix++) {
+            if (result.bounding_boxes[ix].value > 0.5) {
+                if (strcmp(result.bounding_boxes[ix].label, "swiss") == 0) {
+                    pred_result = SWISS_RES_CHAR;
+                    break;
+                } else if(strcmp(result.bounding_boxes[ix].label, "eu") == 0) {
+                    pred_result = EU_RES_CHAR;
+                    break;
+                }
+            }
+        }
+
+        if (!bb_found) {
+            ei_printf("    No objects found\n");
+            pred_result = UNKNOWN_RES_CHAR;
+        }
     }
 
-    if (!bb_found) {
-        ei_printf("    No objects found\n");
-    }
-#else
-    for (size_t ix = 0; ix < EI_CLASSIFIER_LABEL_COUNT; ix++) {
-        ei_printf("    %s: ", result.classification[ix].label);
-        ei_printf_float(result.classification[ix].value);
-        ei_printf("\n");
-    }
-#if EI_CLASSIFIER_HAS_ANOMALY == 1
-    ei_printf("    anomaly score: ");
-    ei_printf_float(result.anomaly);
-    ei_printf("\n");
-#endif
-#endif
+    Serial1.print(pred_result);
+
+    digitalWrite(LED_BUILTIN, (led_status) ? HIGH : LOW);
+    led_status = !led_status;
 }
 
 /**
@@ -216,17 +182,6 @@ bool ei_camera_init(void) {
     }
     
     return true;
-}
-
-/**
- * @brief      Stop streaming of sensor data
- */
-void ei_camera_deinit(void) {
-
-    ei_free(ei_camera_frame_mem);
-    ei_camera_frame_mem = NULL;
-    ei_camera_frame_buffer = NULL;
-    is_initialised = false;
 }
 
 /**
@@ -377,7 +332,3 @@ int calculate_resize_dimensions(uint32_t out_width, uint32_t out_height, uint32_
 
     return 0;
 }
-
-#if !defined(EI_CLASSIFIER_SENSOR) || EI_CLASSIFIER_SENSOR != EI_CLASSIFIER_SENSOR_CAMERA
-#error "Invalid model for current sensor"
-#endif
