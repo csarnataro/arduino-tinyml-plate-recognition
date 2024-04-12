@@ -4,12 +4,21 @@
 :Revision: version#
 :License: Public Domain
 
-= Project: {Project}
+= Project: Show Giga R1 on the Cloud
 
 An Arduino Cloud sketch which receives commands from the UART interface and draws
 national flags on an Arduino Giga Display Shield connected to an Arduino Giga R1 board.
 It will be used as a demo in a talk to show results coming from an Arduino Nicla Vision
 (or any other board with UART interface) trained with Edge Impulse to do image recognition on the edge. 
+Currently supported commands (as single bytes):
+- 'E' => European flag
+- 'S' => Swiss flag
+- 'U' => Unknown => Stop sign
+- 'F' => Failure => Warning message
+
+All other commands will show a simple warning message
+
+It can work online (see `#define CLOUD_ENABLE 1` in the sketch) or offline (`#define CLOUD_ENABLE 0` in the sketch)
 
 == Step 1: Installation
 1. Create a Thing on the Arduino Cloud (https://app.arduino.cc/). You need an Arduino account.
