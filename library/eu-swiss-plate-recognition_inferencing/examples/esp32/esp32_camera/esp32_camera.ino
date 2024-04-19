@@ -20,6 +20,9 @@
  * SOFTWARE.
  */
 
+// These sketches are tested with 2.0.4 ESP32 Arduino Core
+// https://github.com/espressif/arduino-esp32/releases/tag/2.0.4
+
 /* Includes ---------------------------------------------------------------- */
 #include <eu-swiss-plate-recognition_inferencing.h>
 #include "edge-impulse-sdk/dsp/image/image.hpp"
@@ -338,7 +341,9 @@ static int ei_camera_get_data(size_t offset, size_t length, float *out_ptr)
     size_t out_ptr_ix = 0;
 
     while (pixels_left != 0) {
-        out_ptr[out_ptr_ix] = (snapshot_buf[pixel_ix] << 16) + (snapshot_buf[pixel_ix + 1] << 8) + snapshot_buf[pixel_ix + 2];
+        // Swap BGR to RGB here
+        // due to https://github.com/espressif/esp32-camera/issues/379
+        out_ptr[out_ptr_ix] = (snapshot_buf[pixel_ix + 2] << 16) + (snapshot_buf[pixel_ix + 1] << 8) + snapshot_buf[pixel_ix];
 
         // go to the next pixel
         out_ptr_ix++;

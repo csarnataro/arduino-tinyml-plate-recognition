@@ -20,6 +20,9 @@
  * SOFTWARE.
  */
 
+// These sketches are tested with 2.0.4 ESP32 Arduino Core
+// https://github.com/espressif/arduino-esp32/releases/tag/2.0.4
+
 /* Includes ---------------------------------------------------------------- */
 #include <eu-swiss-plate-recognition_inferencing.h>
 #include <LIS3DHTR.h> //Click here to get the library: http://librarymanager/All#LIS3DHTR

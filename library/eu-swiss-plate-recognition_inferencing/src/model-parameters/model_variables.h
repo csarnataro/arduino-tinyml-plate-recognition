@@ -37,6 +37,8 @@ ei_dsp_config_image_t ei_dsp_config_4 = {
     4, // uint32_t blockId
     1, // int implementationVersion
     1, // int length of axes
+    NULL, // named axes
+    0, // size of the named axes array
     "RGB" // select channels
 };
 
@@ -110,7 +112,7 @@ const ei_impulse_t impulse_377422_0 = {
     .project_id = 377422,
     .project_owner = "Leonardo",
     .project_name = "eu-swiss-plate-recognition",
-    .deploy_version = 2,
+    .deploy_version = 4,
 
     .nn_input_frame_size = 27648,
     .raw_sample_count = 9216,
