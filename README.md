@@ -5,8 +5,8 @@ Companion repo for the talk: **[Tiny ML on Arduino From the Edge to the Cloud](h
 This repo contains:
 - 3 sketches for:
   - Arduino Nicla Vision, for image detection on the Edge
-  - Arduino Giga R1 + Arduino Giga Display Shield, for displaying the results on a local dashboard) and optionally to send data to Arduino Cloud
-  - Arduino Nano RP2040 for reading from the Cloud, via WiFi, in pseudo real time, the results sent from from the Giga R1, using the "Thing-to-thing" synchronization.
+  - Arduino Giga R1 + Arduino Giga Display Shield, for displaying the results on a local dashboard and optionally to send data to Arduino Cloud
+  - Arduino Nano RP2040 for reading from the Cloud, via WiFi in pseudo real time, the results sent from from the Giga R1 to the Cloud, using the "Thing-to-thing" synchronization.
     This Sketch in built with Micropython, using the experimental Arduino IDE for MicroPython available at https://github.com/arduino/lab-micropython-editor  
  
 - A library built with Edge Impulse which is responsible for the actual image detection. This library is embeded in the Sketch uploaded on the Nicla Vision
