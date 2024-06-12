@@ -32,7 +32,7 @@ GigaDisplay_GFX display;
 #define ARDUINO_COLOR 0x64f3
 
 // for how long we want to display a flag on display
-#define SHOW_FLAG_TIME (2*1000)
+#define SHOW_FLAG_TIME (5*1000)
 
 // how many seconds to display the "connection lost" screen
 #define DISCONNECTION_TIME (10*1000)
