@@ -9,7 +9,9 @@ This repo contains:
   - Arduino Nano RP2040 for reading from the Cloud, via WiFi in pseudo real time, the results sent from from the Giga R1 to the Cloud, using the "Thing-to-thing" synchronization.
     This Sketch in built with Micropython, using the experimental Arduino IDE for MicroPython available at https://github.com/arduino/lab-micropython-editor. It also available the Wiring version.
  
-- A library built with Edge Impulse which is responsible for the actual image detection. This library is embeded in the Sketch uploaded on the Nicla Vision
+- A library built with Edge Impulse which is responsible for the actual image detection. This library is embeded in the Sketch uploaded on the Nicla Vision.
+  
+  The Edge Impulse public project is available at: [https://studio.edgeimpulse.com/public/377422/live](https://studio.edgeimpulse.com/public/377422/live)
 
 Please see individual README files in each folder for further details.
 
